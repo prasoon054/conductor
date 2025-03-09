@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sched.h>
@@ -94,12 +95,10 @@ int main() {
     */
 
    // ------------------ WRITE CODE HERE ------------------
-
-
-
-
-
-
+    child_pid = clone(child_function, child_stack+CHILD_STACK_SIZE, CLONE_NEWUTS|CLONE_NEWPID|SIGCHLD, pipefd);
+    if(child_pid==-1){
+        errExit("clone");
+    }
    // -----------------------------------------------------
 
     close(pipefd[1]);
@@ -113,10 +112,13 @@ int main() {
     */
 
     // ------------------ WRITE CODE HERE ------------------
-
-
-
-
+    char ns_path[64];
+    int fd_pid;
+    snprintf(ns_path, sizeof(ns_path), "/proc/%d/ns/pid", child_pid);
+    fd_pid = open(ns_path, O_RDONLY);
+    if(setns(fd_pid, 0)==-1){
+        errExit("setns");
+    }
     // -----------------------------------------------------
 
 
@@ -134,9 +136,11 @@ int main() {
         */
 
         // ------------------ WRITE CODE HERE ------------------
-
-
-
+        snprintf(ns_path, sizeof(ns_path), "/proc/%d/ns/uts", child_pid);
+        int fd_uts = open(ns_path, O_RDONLY);
+        if(setns(fd_uts, 0)==-1){
+            errExit("setns");
+        }
         // -----------------------------------------------------
 
         child2_function();
