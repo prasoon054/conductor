@@ -34,7 +34,9 @@ echo -e "\nHostname in the host: $(hostname)"
 
 ## Subtask 3: Execute in a new root filesystem with new PID, UTS and IPC namespace + Resource Control
 # Create a new cgroup and set the max CPU utilization to 50% of the host CPU. (Consider only 1 CPU core)
-
+CGROUP_PATH="/sys/fs/cgroup/simple_container"
+mkdir -p $CGROUP_PATH
+echo "50000 100000" > /sys/fs/cgroup/simple_container/cpu.max
 
 
 echo "__________________________________________"
@@ -42,8 +44,9 @@ echo -e "\n\e[1;32mOutput Subtask 2c\e[0m"
 # Assign pid to the cgroup such that the container_prog runs in the cgroup
 # Run the container_prog in the new root filesystem with new PID, UTS and IPC namespace
 # You should pass "subtask1" as an argument to container_prog
+unshare --uts --pid --fork --mount-proc -r bash -c "echo \$\$ > $CGROUP_PATH/cgroup.procs; exec chroot $SIMPLE_CONTAINER_ROOT ./container_prog subtask3"
 
 # Remove the cgroup
-
+rmdir $CGROUP_PATH
 
 # If mounted dependent libraries, unmount them, else ignore
