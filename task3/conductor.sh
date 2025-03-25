@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # CS695 Conductor that manages containers 
-# Author: <your-name>
+# Author: Prasoon Kumar
 #
 echo -e "\e[1;32mCS695 Conductor that manages containers\e[0m"
 
@@ -321,6 +321,7 @@ run() {
 
     # Subtask 3.a.1
     # You should bind mount /dev within the container root fs
+    mount --bind /dev "$CONTAINERDIR/$NAME/rootfs/dev"
 
     # Subtask 3.d.3
     # Modify subtask 3.a.1 to bind mount /dev
@@ -333,6 +334,12 @@ run() {
     # - When unshare process exits all of its children also exit (--kill-child option)
     # - permission of root dir within container should be set to 755 for apt to work correctly
     # - $INIT_CMD_ARGS should be the entry program for the container
+    unshare --pid --fork --mount --uts --ipc --net -r \
+        chroot "$CONTAINERDIR/$NAME/rootfs" /bin/bash -c "
+        mount -t proc proc /proc
+        mount -t sysfs sysfs /sys
+        chmod 755 /
+        exec $INIT_CMD_ARGS"
 
     # Subtask 3.d.3
     # Modify subtask 3.a.2 to use the overlay filesystem
@@ -430,8 +437,8 @@ exec() {
     # The executed process should be within correct namespace and root
     # directory as of the container and tools like ps, top should show only processes
     # running within the container
-
-
+    nsenter --target "$CONTAINER_INIT_PID" --pid --uts --net --ipc --mount -r \
+        chroot "$CONTAINERDIR/$NAME/rootfs" /bin/bash -c $EXEC_CMD_ARGS
 }
 
 # Subtask 3.c
