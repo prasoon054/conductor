@@ -334,12 +334,12 @@ run() {
     # - When unshare process exits all of its children also exit (--kill-child option)
     # - permission of root dir within container should be set to 755 for apt to work correctly
     # - $INIT_CMD_ARGS should be the entry program for the container
-    unshare --pid --fork --mount --uts --ipc --net -r \
-        chroot "$CONTAINERDIR/$NAME/rootfs" /bin/bash -c "
-        mount -t proc proc /proc
-        mount -t sysfs sysfs /sys
-        chmod 755 /
-        exec $INIT_CMD_ARGS"
+    unshare --pid --fork --mount --uts --ipc --net --kill-child bash -c " \
+        chroot "$CONTAINERDIR/$NAME/rootfs" /bin/bash -c \" \
+        mount -t proc proc /proc && \
+        mount -t sysfs sysfs /sys && \
+        chmod 755 / && \
+        exec $INIT_CMD_ARGS \""
 
     # Subtask 3.d.3
     # Modify subtask 3.a.2 to use the overlay filesystem
@@ -437,8 +437,9 @@ exec() {
     # The executed process should be within correct namespace and root
     # directory as of the container and tools like ps, top should show only processes
     # running within the container
-    nsenter --target "$CONTAINER_INIT_PID" --pid --uts --net --ipc --mount -r \
-        chroot "$CONTAINERDIR/$NAME/rootfs" /bin/bash -c $EXEC_CMD_ARGS
+    local CONDUCTORKAROOT=$(realpath "$CONTAINERDIR/$NAME/rootfs")
+    nsenter --target "$CONTAINER_INIT_PID" --pid --uts --net --ipc --mount bash -c " \
+        chroot \"$CONDUCTORKAROOT\" $EXEC_CMD_ARGS"
 }
 
 # Subtask 3.c
