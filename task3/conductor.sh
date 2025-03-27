@@ -497,7 +497,8 @@ addnetwork() {
     # Inside the container, it should use INSIDE_PEER interface and within the host it should use
     # OUTSIDE_PEER interface
     # You should use iproute2 tool (ip command)
-
+    ip link add "$OUTSIDE_PEER" type veth peer name "$INSIDE_PEER"
+    ip link set "$INSIDE_PEER" netns "$NAME"
 
     # Lesson: By default linux does not forward packets, it only acts as an end host
     # We need to enable packet forwarding capability to forward packets to our containers
@@ -507,7 +508,9 @@ addnetwork() {
     # Enable the interfaces that you have created within the host and the container
     # You should also enable lo interface within the container (which is disabled by default)
     # In total here 3 interfaces should be enabled
-
+    ip link set "$OUTSIDE_PEER" up
+    ip -n "$NAME" link set "$INSIDE_PEER" up
+    ip -n "$NAME" link set lo up
 
     # Lesson: Configuring addresses and adding routes for the container in the routing table
     # according to the addressing conventions selected above
