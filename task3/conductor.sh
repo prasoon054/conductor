@@ -112,19 +112,21 @@ handle_run() {
     
     # Subtask 3.f.1
     # Create new layer
-    
-
+    local NEW_LAYER_DIR="$CACHEDIR/layers/$layer_hash"
+    mkdir -p "$NEW_LAYER_DIR/work" "$NEW_LAYER_DIR/diff" "$NEW_LAYER_DIR/temp"
+    local LOWER_DIR="$parent_layers"
     # Subtask 3.f.2
     # Temporarily mount the overlay filesystem
-    
-
+    mount -t overlay overlay -o lowerdir="$LOWER_DIR",upperdir="$NEW_LAYER_DIR/diff",workdir="$NEW_LAYER_DIR/work" "$NEW_LAYER_DIR/temp" \
+    || die "Overlay mount failed in COPY operation"
     # Subtask 3.f.3
     # Execute the command in the new mount
-
-    
+    # chroot "$NEW_LAYER_DIR/temp" /bin/bash -c "$command" \
+    #     || die "RUN command failed"
     # Subtask 3.f.4
     # Cleanup and record metadata
-    
+    umount "$NEW_LAYER_DIR/temp" || die "Failed to unmount overlay after COPY operation"
+    rm -rf "$NEW_LAYER_DIR/temp"
 }
 
 # Subtask 3.e
@@ -155,19 +157,22 @@ handle_copy() {
     
     # Subtask 3.e.1
     # Create a new layer
-
-
+    local NEW_LAYER_DIR="$CACHEDIR/layers/$layer_hash"
+    mkdir -p "$NEW_LAYER_DIR/work" "$NEW_LAYER_DIR/diff" "$NEW_LAYER_DIR/temp"
+    local LOWER_DIR="$parent_layers"
     # Subtask 3.e.2
     # Temporarily mount the overlay filesystem
-
+    mount -t overlay overlay -o lowerdir="$LOWER_DIR",upperdir="$NEW_LAYER_DIR/diff",workdir="$NEW_LAYER_DIR/work" "$NEW_LAYER_DIR/temp" \
+    || die "Overlay mount failed in COPY operation"
+    mkdir -p "$NEW_LAYER_DIR/temp$dest"
     
     # Subtask 3.e.3
     # Copy the files from source to destination
-
-    
+    cp -a "$src"/. "$NEW_LAYER_DIR/temp$dest/" || die "Copy operation failed"
     # Subtask 3.e.4
     # Unmount the overlay filesystem
-
+    umount "$NEW_LAYER_DIR/temp" || die "Failed to unmount overlay after COPY operation"
+    rm -rf "$NEW_LAYER_DIR/temp"
 
     # Record metadata and parent layer
     echo "COPY $src $dest" > "$CACHEDIR/layers/$layer_hash/metadata"
@@ -216,14 +221,14 @@ build() {
     # # Subtask 3.d.1 - start 
     # # Uncomment the below code to implement layering
     # # Store the base layer and the layer stack in the image directory to be used later
-    local BASE_LAYER=$"$CACHEDIR/base/$BASE_NAME"
+    local BASE_LAYER="$CACHEDIR/base/$BASE_NAME"
     local LAYER_STACK="$BASE_LAYER"
     
     # # For subtask 3.e and 3.f
-    # while IFS= read -r instruction; do
-    #     process_instruction "$instruction" "$LAYER_STACK"
-    #     LAYER_STACK=$(update_layer_stack "$current_layer/diff" "$LAYER_STACK")
-    # done < <(grep -E '^(RUN|COPY)' "$CONDUCTORFILE")
+    while IFS= read -r instruction; do
+        process_instruction "$instruction" "$LAYER_STACK"
+        LAYER_STACK=$(update_layer_stack "$current_layer/diff" "$LAYER_STACK")
+    done < <(grep -E '^(RUN|COPY)' "$CONDUCTORFILE")
     
     mkdir -p "$IMAGEDIR/$NAME"
     echo "$LAYER_STACK" > "$IMAGEDIR/$NAME/layers"
