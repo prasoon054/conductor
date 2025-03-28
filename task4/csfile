@@ -2,6 +2,4 @@ FROM debian:bookworm
 # Copy the entire counter-service directory into the image at /opt/counter-service
 COPY ./counter-service /counter-service
 # Execute the necessary commands to build the counter service
-RUN apt update && \
-    apt install -y build-essential && \
-    make
+RUN cd counter-service && apt update && apt install -y build-essential && make

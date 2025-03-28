@@ -11,7 +11,11 @@ ln -s ../task3/setup.sh setup.sh
 
 # Logical actions to do:
 # 1. Build images for the containers
+echo "Building counter-service image..."
+sudo ./conductor.sh build cs-image csfile
 
+echo "Building external-service image..."
+sudo ./conductor.sh build es-image esfile
 # 2. Run two containers say es-cont and cs-cont which should run in background. Tip: to keep the container running
 #    in background you should use a init program that will not interact with the terminal and will not
 #    exit. e.g. sleep infinity, tail -f /dev/null
