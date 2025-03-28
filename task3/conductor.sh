@@ -121,12 +121,17 @@ handle_run() {
     || die "Overlay mount failed in COPY operation"
     # Subtask 3.f.3
     # Execute the command in the new mount
-    # chroot "$NEW_LAYER_DIR/temp" /bin/bash -c "$command" \
-    #     || die "RUN command failed"
+    chroot "$NEW_LAYER_DIR/temp" /bin/bash -c "$command" \
+        || die "RUN command failed"
     # Subtask 3.f.4
     # Cleanup and record metadata
     umount "$NEW_LAYER_DIR/temp" || die "Failed to unmount overlay after COPY operation"
     rm -rf "$NEW_LAYER_DIR/temp"
+
+    echo "RUN $command" > "$CACHEDIR/layers/$layer_hash/metadata"
+    echo "$parent_hash" > "$CACHEDIR/layers/$layer_hash/parent"
+    current_layer="$CACHEDIR/layers/$layer_hash"
+    echo "$current_layer" > "$CACHEDIR/layers/.last_layer"
 }
 
 # Subtask 3.e
