@@ -395,7 +395,7 @@ stop() {
     # Subtask 3.d.3
     # Modify the below code to use the overlay filesystem
     # Lesson: Getting the pid of the entry process within the container
-    local PID=$(ps -ef | grep "$CONTAINERDIR/$NAME/rootfs" | grep -v grep | awk '{print $2}')
+    local PID=$(ps -ef | grep "$CONTAINERDIR/$NAME/merged" | grep -v grep | awk '{print $2}')
     
 
     # Lesson: Delete the ip link created in host for the container
@@ -449,7 +449,7 @@ exec() {
     # This is the PID of the process that unshare executed within the container
     local CONTAINER_INIT_PID=$(pgrep -P $UNSHARE_PID | head -1)
     [ -z "$CONTAINER_INIT_PID" ] && die "Cannot find container process"
-
+    
     # Subtask 3.b.1
     # Write command to join the existing namespace {all namespaces: uts, pid, net, mount, ipc} 
     # of the running container and execute the given command and args. 
